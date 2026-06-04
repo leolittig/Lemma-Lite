@@ -1,6 +1,6 @@
 # Lemma
 
-A lightweight LLM chat interface optimized for Apple Silicon using MLX.
+A lightweight LLM chat interface optimized for Apple Silicon using MLX. A web version of the terminal UI that supports Markdown formatting outputs for a cleaner view.
 
 ## How it Works
 
