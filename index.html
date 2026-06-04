@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Lemma</title>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    body { font-family: georgia; max-width: 700px; margin: 0 auto; padding: 2rem; }
+    #messages { display: flex; flex-direction: column; gap: 1rem; margin-bottom: 2rem; }
+    .user { opacity: 0.8; align-self: flex-end; }
+    form { display: flex; gap: .5rem; }
+    textarea { flex: 1; padding: .5rem; font-family: inherit; font-size: 1rem; resize: none; }
+    button { padding: .5rem 1rem; }
+  </style>
+</head>
+<body>
+  <div id="messages"></div>
+  <form id="form">
+    <textarea id="input" rows="1"></textarea>
+    <button type="submit">></button>
+  </form>
+  <script>
+    const messages = document.getElementById('messages');
+    const input = document.getElementById('input');
+
+    function addMessage(role, text) {
+      const div = document.createElement('div');
+      div.className = role;
+      div.innerHTML = marked.parse(text);
+      messages.appendChild(div);
+      div.scrollIntoView();
+      return div;
+    }
+
+    document.getElementById('form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const text = input.value.trim();
+      if (!text) return;
+      input.value = '';
+      addMessage('user', text);
+
+      const res = await fetch('/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text })
+      });
+
+      const div = addMessage('assistant', '');
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let reply = '';
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        reply += decoder.decode(value, { stream: true });
+        div.innerHTML = marked.parse(reply);
+        div.scrollIntoView();
+      }
+    });
+
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); e.target.form.requestSubmit(); }
+    });
+  </script>
+</body>
+</html>
